@@ -1,0 +1,3 @@
+/home/andrey/Desktop/Projects_3_sem_IT/Microshell/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/andrey/Desktop/Projects_3_sem_IT/Microshell/cmake-build-debug/CMakeFiles/Microshell.dir
+/home/andrey/Desktop/Projects_3_sem_IT/Microshell/cmake-build-debug/CMakeFiles/edit_cache.dir
