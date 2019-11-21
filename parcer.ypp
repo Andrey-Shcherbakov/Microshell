@@ -1,0 +1,136 @@
+%require "3.2"
+%language "c++"
+%define api.token.constructor
+%define api.value.type variant
+%define parse.assert
+
+%code requires{
+#include <iostream>
+#include <vector>
+#include <string>
+#include <unistd.h>
+#include <sys/types.h>
+#include <stdlib.h>
+#include <sys/wait.h>
+
+void print_cwd();
+void Tubes(std::vector <std::vector <std:: string> > &P);
+}
+
+%code
+{
+    #define YY_DECL yy::parser::symbol_type yylex ()
+    YY_DECL;
+}
+
+%token <std::string >  STRING
+%token <char> OR LEND
+%type  <std::string >  cmd item
+%type  <std::vector <std:: string> > fullcommand args
+%type  <std::vector <std::vector <std:: string> > >  ln
+%start ex
+
+%%
+ex : ln LEND ex {Tubes($1); print_cwd();}
+   | ln {Tubes($1);}
+   ;
+ln : fullcommand OR ln {std::vector <std::vector <std:: string> >::iterator it = $3.begin();
+                        $3.insert(it, $1); $$ = $3;}
+   | fullcommand {$$.push_back($1);}
+   ;
+fullcommand : cmd args {std::vector<std:: string>::iterator it = $2.begin();
+                        $2.insert(it, $1); $$ = $2;}
+            | cmd {$$.push_back($1);}
+            ;
+args : item args {std::vector<std:: string>::iterator it = $2.begin();
+                  $2.insert(it, $1); $$ = $2;}
+     | item  {$$.push_back($1);}
+     ;
+item : STRING {std::cout << "item " << $1 << "\n"; $$ = $1;}
+     ;
+cmd : STRING {std::cout << "cmd " << $1 << "\n"; $$ = $1;}
+    ;
+%%
+
+void yy::parser::error (const std::string& m)
+{
+  std::cerr << m << '\n';
+}
+
+void Tubes(std::vector <std::vector <std:: string> > &P){
+
+    for(int i = 0; i < P.size(); i++){
+        for(int j = 0; j < P[i].size(); j ++)
+            std:: cout << "my args:: " << P[i][j] << "\n";
+    }
+
+    if(P.size() > 1){
+        pid_t lastp;
+        std::vector <std:: vector <int> > pd(P.size()-1, (std::vector<int> (2,0)));
+        for(int i = 0; i < pd.size(); i++) {int fd[2]; pipe(fd); pd[i][0] = fd[0]; pd[i][1] = fd[1];}
+        for(int i = 0; i < P.size(); i++){
+            lastp = fork();
+            if(lastp == 0){//child
+                //std:: cout << "I'm a child " << getpid() << "\n";
+
+                if(i < pd.size()) {
+                    close(STDOUT_FILENO);
+                    dup2(pd[i][1], STDOUT_FILENO);
+                 }
+                for(int j = 0; j < pd.size(); j++) close(pd[j][1]);
+
+                if(i > 0) {
+                    close(STDIN_FILENO);
+                    dup2(pd[i-1][0], STDIN_FILENO);
+                }
+                for(int j = 0; j < pd.size(); j++) close(pd[j][0]);
+
+                //std::cout << P.size() << " " << P[i][0] << " here\n";
+                std::vector <char *> p;
+                for (auto const &q: P[i]) {
+                    p.push_back((char *)(q.c_str()));
+                }
+                p.push_back(NULL);
+                execvp(p[0], &p[0]);
+                perror("execvp");
+                exit(0);
+            }
+        }
+        for(int j = 0; j < pd.size(); j++) {
+            close(pd[j][0]);
+            close(pd[j][1]);
+        }
+        //std:: cout << "I'm a parent " << getpid() << "\n";
+        waitpid(lastp, NULL, 0);
+    }
+    else{
+        pid_t lastp = fork();
+        if(lastp == 0){//child
+            std::vector <char *> p;
+            for (auto const &q: P[0]) {
+                p.push_back((char *)(q.c_str()));
+            }
+            p.push_back(NULL);
+            execvp(p[0], &p[0]);
+            perror("execvp");
+            exit(0);
+        }
+        //std:: cout << "I'm parent " << getpid() << "\n";
+        waitpid(lastp, NULL, 0);
+    }
+}
+
+void print_cwd(){
+    char cwd[256];
+    getcwd(cwd, sizeof(cwd));
+    uid_t euid = geteuid();
+    if(euid == 0) std::cout << cwd << ">";
+    else std::cout << cwd << "!>";
+}
+
+int main(){
+      print_cwd();
+      yy::parser pars;
+      int res = pars.parse();
+      return res;
+  }
