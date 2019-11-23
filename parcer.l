@@ -16,6 +16,8 @@ YY_DECL;
 
 "set" {/*std::cout << yytext <<" \n";*/ return yy::parser::make_SET((std::string) yytext);}
 
+"time" {return yy::parser::make_TIME((std::string) yytext);}
+
 ([[:alnum:]]|\-)+ {/*std::cout << yytext <<" \n";*/ return yy::parser::make_STRING((std::string) yytext);}
 
 \"([^""]|\\.)*\" {/*std::cout << yytext <<" \n"*/; std::string tmp(yytext); tmp.erase(tmp.begin()); tmp.erase(tmp.end()-1);

@@ -10,6 +10,8 @@
 #include <string>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <sys/wait.h>
@@ -33,7 +35,7 @@ void Tubes(inp I);
     YY_DECL;
 }
 
-%token <std::string >  STRING PATH SET VAR
+%token <std::string >  STRING PATH SET VAR TIME
 %token <char> OR LEND EQ IN OUT
 %type  <std::string >  cmd item
 %type  <std::vector <std:: string> > fullcommand args
@@ -41,20 +43,33 @@ void Tubes(inp I);
 %start ex
 
 %%
-ex : ex ln LEND{if(($2.P).size() > 0) Tubes($2);
+ex : ex ln LEND{$2.flag_out = false; $2.f_out = "no out redirections";
+                if(($2.P).size() > 0) Tubes($2);
                 print_cwd();}
-   |  ex ln OUT STRING LEND {$2.flag_out = true; $2.f_out = $4;
+   | ex ln OUT STRING LEND {$2.flag_out = true; $2.f_out = $4;
                               if(($2.P).size() > 0) Tubes($2);
                               print_cwd();}
    | ln LEND {$1.flag_out = false; $1.f_out = "no out redirections";
               if(($1.P).size() > 0) Tubes($1);
               print_cwd();}
+   | ex TIME ln LEND {$3.flag_out = false; $3.f_out = "no out redirections";
+                      if(($3.P).size() > 0) Tubes($3);
+                      struct rusage ru;
+                      getrusage(RUSAGE_SELF, &ru);
+                      std::cout << ru.ru_stime.tv_usec << " usec \n";
+                      print_cwd();}
+   | TIME ln LEND {$2.flag_out = false; $2.f_out = "no out redirections";
+                   if(($2.P).size() > 0) Tubes($2);
+                   struct rusage ru;
+                   getrusage(RUSAGE_SELF, &ru);
+                   std::cout << ru.ru_stime.tv_usec << " usec \n";
+                   print_cwd();}
    | ln OUT STRING LEND {$1.flag_out = true; $1.f_out = $3;
                           if(($1.P).size() > 0) Tubes($1);
                           print_cwd();}
    ;
 ln : ln OR fullcommand {($1.P).push_back($3); $$.P = $1.P;}
-   | fullcommand {($$.P).push_back($1);}
+   | fullcommand {($$.P).push_back($1); $$.flag_in = false; $$.f_in = "no in redirections";}
    | fullcommand IN STRING {($$.P).push_back($1); $$.flag_in = true; $$.f_in = $3;}
    | ln OR setcommand {($$.P) = ($$.P);}
    | setcommand {($$.P) = ($$.P); $$.flag_in = false; $$.f_in = "no in redirections";}

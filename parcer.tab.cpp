@@ -41,7 +41,7 @@
 
 
 // Unqualified %code blocks.
-#line 31 "parcer.ypp"
+#line 33 "parcer.ypp"
 
     #define YY_DECL yy::parser::symbol_type yylex ()
     YY_DECL;
@@ -187,15 +187,15 @@ namespace yy {
   {
     switch (that.type_get ())
     {
-      case 7: // OR
-      case 8: // LEND
-      case 9: // EQ
-      case 10: // IN
-      case 11: // OUT
+      case 8: // OR
+      case 9: // LEND
+      case 10: // EQ
+      case 11: // IN
+      case 12: // OUT
         value.YY_MOVE_OR_COPY< char > (YY_MOVE (that.value));
         break;
 
-      case 14: // ln
+      case 15: // ln
         value.YY_MOVE_OR_COPY< inp > (YY_MOVE (that.value));
         break;
 
@@ -203,13 +203,14 @@ namespace yy {
       case 4: // PATH
       case 5: // SET
       case 6: // VAR
-      case 18: // item
-      case 19: // cmd
+      case 7: // TIME
+      case 19: // item
+      case 20: // cmd
         value.YY_MOVE_OR_COPY< std::string  > (YY_MOVE (that.value));
         break;
 
-      case 16: // fullcommand
-      case 17: // args
+      case 17: // fullcommand
+      case 18: // args
         value.YY_MOVE_OR_COPY< std::vector <std:: string>  > (YY_MOVE (that.value));
         break;
 
@@ -228,15 +229,15 @@ namespace yy {
   {
     switch (that.type_get ())
     {
-      case 7: // OR
-      case 8: // LEND
-      case 9: // EQ
-      case 10: // IN
-      case 11: // OUT
+      case 8: // OR
+      case 9: // LEND
+      case 10: // EQ
+      case 11: // IN
+      case 12: // OUT
         value.move< char > (YY_MOVE (that.value));
         break;
 
-      case 14: // ln
+      case 15: // ln
         value.move< inp > (YY_MOVE (that.value));
         break;
 
@@ -244,13 +245,14 @@ namespace yy {
       case 4: // PATH
       case 5: // SET
       case 6: // VAR
-      case 18: // item
-      case 19: // cmd
+      case 7: // TIME
+      case 19: // item
+      case 20: // cmd
         value.move< std::string  > (YY_MOVE (that.value));
         break;
 
-      case 16: // fullcommand
-      case 17: // args
+      case 17: // fullcommand
+      case 18: // args
         value.move< std::vector <std:: string>  > (YY_MOVE (that.value));
         break;
 
@@ -269,15 +271,15 @@ namespace yy {
     state = that.state;
     switch (that.type_get ())
     {
-      case 7: // OR
-      case 8: // LEND
-      case 9: // EQ
-      case 10: // IN
-      case 11: // OUT
+      case 8: // OR
+      case 9: // LEND
+      case 10: // EQ
+      case 11: // IN
+      case 12: // OUT
         value.move< char > (that.value);
         break;
 
-      case 14: // ln
+      case 15: // ln
         value.move< inp > (that.value);
         break;
 
@@ -285,13 +287,14 @@ namespace yy {
       case 4: // PATH
       case 5: // SET
       case 6: // VAR
-      case 18: // item
-      case 19: // cmd
+      case 7: // TIME
+      case 19: // item
+      case 20: // cmd
         value.move< std::string  > (that.value);
         break;
 
-      case 16: // fullcommand
-      case 17: // args
+      case 17: // fullcommand
+      case 18: // args
         value.move< std::vector <std:: string>  > (that.value);
         break;
 
@@ -539,15 +542,15 @@ namespace yy {
          when using variants.  */
       switch (yyr1_[yyn])
     {
-      case 7: // OR
-      case 8: // LEND
-      case 9: // EQ
-      case 10: // IN
-      case 11: // OUT
+      case 8: // OR
+      case 9: // LEND
+      case 10: // EQ
+      case 11: // IN
+      case 12: // OUT
         yylhs.value.emplace< char > ();
         break;
 
-      case 14: // ln
+      case 15: // ln
         yylhs.value.emplace< inp > ();
         break;
 
@@ -555,13 +558,14 @@ namespace yy {
       case 4: // PATH
       case 5: // SET
       case 6: // VAR
-      case 18: // item
-      case 19: // cmd
+      case 7: // TIME
+      case 19: // item
+      case 20: // cmd
         yylhs.value.emplace< std::string  > ();
         break;
 
-      case 16: // fullcommand
-      case 17: // args
+      case 17: // fullcommand
+      case 18: // args
         yylhs.value.emplace< std::vector <std:: string>  > ();
         break;
 
@@ -580,137 +584,160 @@ namespace yy {
           switch (yyn)
             {
   case 2:
-#line 44 "parcer.ypp"
-    {if((yystack_[1].value.as < inp > ().P).size() > 0) Tubes(yystack_[1].value.as < inp > ());
+#line 46 "parcer.ypp"
+    {yystack_[1].value.as < inp > ().flag_out = false; yystack_[1].value.as < inp > ().f_out = "no out redirections";
+                if((yystack_[1].value.as < inp > ().P).size() > 0) Tubes(yystack_[1].value.as < inp > ());
                 print_cwd();}
-#line 587 "parcer.tab.cpp"
+#line 592 "parcer.tab.cpp"
     break;
 
   case 3:
-#line 46 "parcer.ypp"
+#line 49 "parcer.ypp"
     {yystack_[3].value.as < inp > ().flag_out = true; yystack_[3].value.as < inp > ().f_out = yystack_[1].value.as < std::string  > ();
                               if((yystack_[3].value.as < inp > ().P).size() > 0) Tubes(yystack_[3].value.as < inp > ());
                               print_cwd();}
-#line 595 "parcer.tab.cpp"
+#line 600 "parcer.tab.cpp"
     break;
 
   case 4:
-#line 49 "parcer.ypp"
+#line 52 "parcer.ypp"
     {yystack_[1].value.as < inp > ().flag_out = false; yystack_[1].value.as < inp > ().f_out = "no out redirections";
               if((yystack_[1].value.as < inp > ().P).size() > 0) Tubes(yystack_[1].value.as < inp > ());
               print_cwd();}
-#line 603 "parcer.tab.cpp"
+#line 608 "parcer.tab.cpp"
     break;
 
   case 5:
-#line 52 "parcer.ypp"
-    {yystack_[3].value.as < inp > ().flag_out = true; yystack_[3].value.as < inp > ().f_out = yystack_[1].value.as < std::string  > ();
-                          if((yystack_[3].value.as < inp > ().P).size() > 0) Tubes(yystack_[3].value.as < inp > ());
-                          print_cwd();}
-#line 611 "parcer.tab.cpp"
+#line 55 "parcer.ypp"
+    {yystack_[1].value.as < inp > ().flag_out = false; yystack_[1].value.as < inp > ().f_out = "no out redirections";
+                      if((yystack_[1].value.as < inp > ().P).size() > 0) Tubes(yystack_[1].value.as < inp > ());
+                      struct rusage ru;
+                      getrusage(RUSAGE_SELF, &ru);
+                      std::cout << ru.ru_stime.tv_usec << " usec \n";
+                      print_cwd();}
+#line 619 "parcer.tab.cpp"
     break;
 
   case 6:
-#line 56 "parcer.ypp"
-    {(yystack_[2].value.as < inp > ().P).push_back(yystack_[0].value.as < std::vector <std:: string>  > ()); yylhs.value.as < inp > ().P = yystack_[2].value.as < inp > ().P;}
-#line 617 "parcer.tab.cpp"
+#line 61 "parcer.ypp"
+    {yystack_[1].value.as < inp > ().flag_out = false; yystack_[1].value.as < inp > ().f_out = "no out redirections";
+                   if((yystack_[1].value.as < inp > ().P).size() > 0) Tubes(yystack_[1].value.as < inp > ());
+                   struct rusage ru;
+                   getrusage(RUSAGE_SELF, &ru);
+                   std::cout << ru.ru_stime.tv_usec << " usec \n";
+                   print_cwd();}
+#line 630 "parcer.tab.cpp"
     break;
 
   case 7:
-#line 57 "parcer.ypp"
-    {(yylhs.value.as < inp > ().P).push_back(yystack_[0].value.as < std::vector <std:: string>  > ());}
-#line 623 "parcer.tab.cpp"
+#line 67 "parcer.ypp"
+    {yystack_[3].value.as < inp > ().flag_out = true; yystack_[3].value.as < inp > ().f_out = yystack_[1].value.as < std::string  > ();
+                          if((yystack_[3].value.as < inp > ().P).size() > 0) Tubes(yystack_[3].value.as < inp > ());
+                          print_cwd();}
+#line 638 "parcer.tab.cpp"
     break;
 
   case 8:
-#line 58 "parcer.ypp"
-    {(yylhs.value.as < inp > ().P).push_back(yystack_[2].value.as < std::vector <std:: string>  > ()); yylhs.value.as < inp > ().flag_in = true; yylhs.value.as < inp > ().f_in = yystack_[0].value.as < std::string  > ();}
-#line 629 "parcer.tab.cpp"
+#line 71 "parcer.ypp"
+    {(yystack_[2].value.as < inp > ().P).push_back(yystack_[0].value.as < std::vector <std:: string>  > ()); yylhs.value.as < inp > ().P = yystack_[2].value.as < inp > ().P;}
+#line 644 "parcer.tab.cpp"
     break;
 
   case 9:
-#line 59 "parcer.ypp"
-    {(yylhs.value.as < inp > ().P) = (yylhs.value.as < inp > ().P);}
-#line 635 "parcer.tab.cpp"
+#line 72 "parcer.ypp"
+    {(yylhs.value.as < inp > ().P).push_back(yystack_[0].value.as < std::vector <std:: string>  > ()); yylhs.value.as < inp > ().flag_in = false; yylhs.value.as < inp > ().f_in = "no in redirections";}
+#line 650 "parcer.tab.cpp"
     break;
 
   case 10:
-#line 60 "parcer.ypp"
-    {(yylhs.value.as < inp > ().P) = (yylhs.value.as < inp > ().P); yylhs.value.as < inp > ().flag_in = false; yylhs.value.as < inp > ().f_in = "no in redirections";}
-#line 641 "parcer.tab.cpp"
+#line 73 "parcer.ypp"
+    {(yylhs.value.as < inp > ().P).push_back(yystack_[2].value.as < std::vector <std:: string>  > ()); yylhs.value.as < inp > ().flag_in = true; yylhs.value.as < inp > ().f_in = yystack_[0].value.as < std::string  > ();}
+#line 656 "parcer.tab.cpp"
     break;
 
   case 11:
-#line 63 "parcer.ypp"
-    {setenv(yystack_[2].value.as < std::string  > ().c_str(), yystack_[0].value.as < std::string  > ().c_str(), 1);}
-#line 647 "parcer.tab.cpp"
+#line 74 "parcer.ypp"
+    {(yylhs.value.as < inp > ().P) = (yylhs.value.as < inp > ().P);}
+#line 662 "parcer.tab.cpp"
     break;
 
   case 12:
-#line 66 "parcer.ypp"
-    {std::vector<std:: string>::iterator it = yystack_[0].value.as < std::vector <std:: string>  > ().begin();
-                        yystack_[0].value.as < std::vector <std:: string>  > ().insert(it, yystack_[1].value.as < std::string  > ()); yylhs.value.as < std::vector <std:: string>  > () = yystack_[0].value.as < std::vector <std:: string>  > ();}
-#line 654 "parcer.tab.cpp"
+#line 75 "parcer.ypp"
+    {(yylhs.value.as < inp > ().P) = (yylhs.value.as < inp > ().P); yylhs.value.as < inp > ().flag_in = false; yylhs.value.as < inp > ().f_in = "no in redirections";}
+#line 668 "parcer.tab.cpp"
     break;
 
   case 13:
-#line 68 "parcer.ypp"
-    {yylhs.value.as < std::vector <std:: string>  > ().push_back(yystack_[0].value.as < std::string  > ());}
-#line 660 "parcer.tab.cpp"
+#line 78 "parcer.ypp"
+    {setenv(yystack_[2].value.as < std::string  > ().c_str(), yystack_[0].value.as < std::string  > ().c_str(), 1);}
+#line 674 "parcer.tab.cpp"
     break;
 
   case 14:
-#line 70 "parcer.ypp"
-    {yystack_[1].value.as < std::vector <std:: string>  > ().push_back(yystack_[0].value.as < std::string  > ()); yylhs.value.as < std::vector <std:: string>  > () = yystack_[1].value.as < std::vector <std:: string>  > ();}
-#line 666 "parcer.tab.cpp"
+#line 81 "parcer.ypp"
+    {std::vector<std:: string>::iterator it = yystack_[0].value.as < std::vector <std:: string>  > ().begin();
+                        yystack_[0].value.as < std::vector <std:: string>  > ().insert(it, yystack_[1].value.as < std::string  > ()); yylhs.value.as < std::vector <std:: string>  > () = yystack_[0].value.as < std::vector <std:: string>  > ();}
+#line 681 "parcer.tab.cpp"
     break;
 
   case 15:
-#line 71 "parcer.ypp"
+#line 83 "parcer.ypp"
     {yylhs.value.as < std::vector <std:: string>  > ().push_back(yystack_[0].value.as < std::string  > ());}
-#line 672 "parcer.tab.cpp"
+#line 687 "parcer.tab.cpp"
     break;
 
   case 16:
-#line 72 "parcer.ypp"
+#line 85 "parcer.ypp"
+    {yystack_[1].value.as < std::vector <std:: string>  > ().push_back(yystack_[0].value.as < std::string  > ()); yylhs.value.as < std::vector <std:: string>  > () = yystack_[1].value.as < std::vector <std:: string>  > ();}
+#line 693 "parcer.tab.cpp"
+    break;
+
+  case 17:
+#line 86 "parcer.ypp"
+    {yylhs.value.as < std::vector <std:: string>  > ().push_back(yystack_[0].value.as < std::string  > ());}
+#line 699 "parcer.tab.cpp"
+    break;
+
+  case 18:
+#line 87 "parcer.ypp"
     {char *tmp = getenv(yystack_[0].value.as < std::string  > ().c_str());
                  if(tmp == NULL){
                      std::cerr << "variable was not seted\n";
                  }
                  else yystack_[1].value.as < std::vector <std:: string>  > ().push_back((std::string)tmp); yylhs.value.as < std::vector <std:: string>  > () =yystack_[1].value.as < std::vector <std:: string>  > ();}
-#line 682 "parcer.tab.cpp"
+#line 709 "parcer.tab.cpp"
     break;
 
-  case 17:
-#line 77 "parcer.ypp"
+  case 19:
+#line 92 "parcer.ypp"
     {char *tmp = getenv(yystack_[0].value.as < std::string  > ().c_str());
            if(tmp == NULL){
                std::cerr << "variable was not seted\n";
            }
            else yylhs.value.as < std::vector <std:: string>  > ().push_back((std::string)tmp);}
-#line 692 "parcer.tab.cpp"
-    break;
-
-  case 18:
-#line 83 "parcer.ypp"
-    {/*std::cout << " item " << $1 << "\n";*/ yylhs.value.as < std::string  > () = yystack_[0].value.as < std::string  > ();}
-#line 698 "parcer.tab.cpp"
-    break;
-
-  case 19:
-#line 84 "parcer.ypp"
-    {yylhs.value.as < std::string  > () = yystack_[0].value.as < std::string  > ();}
-#line 704 "parcer.tab.cpp"
+#line 719 "parcer.tab.cpp"
     break;
 
   case 20:
-#line 86 "parcer.ypp"
+#line 98 "parcer.ypp"
+    {/*std::cout << " item " << $1 << "\n";*/ yylhs.value.as < std::string  > () = yystack_[0].value.as < std::string  > ();}
+#line 725 "parcer.tab.cpp"
+    break;
+
+  case 21:
+#line 99 "parcer.ypp"
+    {yylhs.value.as < std::string  > () = yystack_[0].value.as < std::string  > ();}
+#line 731 "parcer.tab.cpp"
+    break;
+
+  case 22:
+#line 101 "parcer.ypp"
     {/*std::cout << "cmd " << $1 << "\n"*/; yylhs.value.as < std::string  > () = yystack_[0].value.as < std::string  > ();}
-#line 710 "parcer.tab.cpp"
+#line 737 "parcer.tab.cpp"
     break;
 
 
-#line 714 "parcer.tab.cpp"
+#line 741 "parcer.tab.cpp"
 
             default:
               break;
@@ -887,81 +914,83 @@ namespace yy {
   }
 
 
-  const signed char parser::yypact_ninf_ = -3;
+  const signed char parser::yypact_ninf_ = -10;
 
   const signed char parser::yytable_ninf_ = -1;
 
   const signed char
   parser::yypact_[] =
   {
-      12,    -3,     5,     0,    -1,    -3,    11,    -2,    14,    -3,
-       1,    12,    -3,    21,    22,    -3,    -3,    -3,    10,    -3,
-      15,    -3,    23,    -3,    -3,    19,    -3,    -3,    -3,    -3,
-      20,    -3,    -3
+       8,   -10,    -4,    23,     3,     9,   -10,     5,     1,    12,
+      22,   -10,    23,    11,    23,   -10,    33,    34,   -10,   -10,
+     -10,    21,   -10,    29,   -10,    26,   -10,    35,   -10,   -10,
+      20,   -10,   -10,   -10,   -10,   -10,    30,   -10,   -10
   };
 
   const unsigned char
   parser::yydefact_[] =
   {
-       0,    20,     0,     0,     0,    10,     7,    13,     0,     1,
-       0,     0,     4,     0,     0,    18,    19,    17,    12,    15,
-       0,     2,     0,     9,     6,     0,     8,    16,    14,    11,
-       0,     5,     3
+       0,    22,     0,     0,     0,     0,    12,     9,    15,     0,
+       0,     1,     0,     0,     0,     4,     0,     0,    20,    21,
+      19,    14,    17,     0,     6,     0,     2,     0,    11,     8,
+       0,    10,    18,    16,    13,     5,     0,     7,     3
   };
 
   const signed char
   parser::yypgoto_[] =
   {
-      -3,    -3,    26,    24,    25,    -3,     2,    -3
+     -10,   -10,    -3,    27,    28,   -10,    -9,   -10
   };
 
   const signed char
   parser::yydefgoto_[] =
   {
-      -1,     3,     4,     5,     6,    18,    19,     7
+      -1,     4,     5,     6,     7,    21,    22,     8
   };
 
   const unsigned char
   parser::yytable_[] =
   {
-       9,    15,    16,     1,    17,     2,    11,    12,    11,    21,
-      13,     8,    22,    15,    16,     1,    27,     2,    15,    16,
-      28,    14,    29,    20,    25,    26,    30,    31,    32,    10,
-       0,     0,     0,     0,     0,    23,    24
+      10,    13,     9,    11,    18,    19,     1,    20,     2,    25,
+      12,     1,    33,     2,    34,     3,    17,    14,    15,    14,
+      26,    16,    23,    27,    18,    19,     1,    32,     2,    37,
+      14,    24,    18,    19,    14,    35,    30,    31,    36,    38,
+       0,    28,    29
   };
 
   const signed char
   parser::yycheck_[] =
   {
-       0,     3,     4,     3,     6,     5,     7,     8,     7,     8,
-      11,     6,    11,     3,     4,     3,     6,     5,     3,     4,
-      18,    10,    20,     9,     3,     3,     3,     8,     8,     3,
-      -1,    -1,    -1,    -1,    -1,    11,    11
+       3,     4,     6,     0,     3,     4,     3,     6,     5,    12,
+       7,     3,    21,     5,    23,     7,    11,     8,     9,     8,
+       9,    12,    10,    12,     3,     4,     3,     6,     5,     9,
+       8,     9,     3,     4,     8,     9,     3,     3,     3,     9,
+      -1,    14,    14
   };
 
   const unsigned char
   parser::yystos_[] =
   {
-       0,     3,     5,    13,    14,    15,    16,    19,     6,     0,
-      14,     7,     8,    11,    10,     3,     4,     6,    17,    18,
-       9,     8,    11,    15,    16,     3,     3,     6,    18,    18,
-       3,     8,     8
+       0,     3,     5,     7,    14,    15,    16,    17,    20,     6,
+      15,     0,     7,    15,     8,     9,    12,    11,     3,     4,
+       6,    18,    19,    10,     9,    15,     9,    12,    16,    17,
+       3,     3,     6,    19,    19,     9,     3,     9,     9
   };
 
   const unsigned char
   parser::yyr1_[] =
   {
-       0,    12,    13,    13,    13,    13,    14,    14,    14,    14,
-      14,    15,    16,    16,    17,    17,    17,    17,    18,    18,
-      19
+       0,    13,    14,    14,    14,    14,    14,    14,    15,    15,
+      15,    15,    15,    16,    17,    17,    18,    18,    18,    18,
+      19,    19,    20
   };
 
   const unsigned char
   parser::yyr2_[] =
   {
-       0,     2,     3,     5,     2,     4,     3,     1,     3,     3,
-       1,     4,     2,     1,     2,     1,     2,     1,     1,     1,
-       1
+       0,     2,     3,     5,     2,     4,     3,     4,     3,     1,
+       3,     3,     1,     4,     2,     1,     2,     1,     2,     1,
+       1,     1,     1
   };
 
 
@@ -971,8 +1000,8 @@ namespace yy {
   const char*
   const parser::yytname_[] =
   {
-  "$end", "error", "$undefined", "STRING", "PATH", "SET", "VAR", "OR",
-  "LEND", "EQ", "IN", "OUT", "$accept", "ex", "ln", "setcommand",
+  "$end", "error", "$undefined", "STRING", "PATH", "SET", "VAR", "TIME",
+  "OR", "LEND", "EQ", "IN", "OUT", "$accept", "ex", "ln", "setcommand",
   "fullcommand", "args", "item", "cmd", YY_NULLPTR
   };
 
@@ -980,9 +1009,9 @@ namespace yy {
   const unsigned char
   parser::yyrline_[] =
   {
-       0,    44,    44,    46,    49,    52,    56,    57,    58,    59,
-      60,    63,    66,    68,    70,    71,    72,    77,    83,    84,
-      86
+       0,    46,    46,    49,    52,    55,    61,    67,    71,    72,
+      73,    74,    75,    78,    81,    83,    85,    86,    87,    92,
+      98,    99,   101
   };
 
   // Print the state stack on the debug stream.
@@ -1016,9 +1045,9 @@ namespace yy {
 
 
 } // yy
-#line 1020 "parcer.tab.cpp"
+#line 1049 "parcer.tab.cpp"
 
-#line 88 "parcer.ypp"
+#line 103 "parcer.ypp"
 
 
 void yy::parser::error (const std::string& m)
