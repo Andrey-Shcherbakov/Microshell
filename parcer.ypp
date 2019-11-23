@@ -13,10 +13,15 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <fcntl.h>
+#include <dirent.h>
 #include <stdlib.h>
 #include <sys/wait.h>
+#include <regex>
 
 void print_cwd();
+void echo_exec(std::vector <std:: string> P);
+void pwd_exec();
+void dive(std::string pth, std::vector <std:: string> &P);
 
 struct inp{
     std::vector <std::vector <std:: string> > P;
@@ -89,14 +94,15 @@ args : args item {$1.push_back($2); $$ = $1;}
                      std::cerr << "variable was not seted\n";
                  }
                  else $1.push_back((std::string)tmp); $$ =$1;}
+     | args PATH {dive($2, $1); $$ = $1;}
      | VAR {char *tmp = getenv($1.c_str());
            if(tmp == NULL){
                std::cerr << "variable was not seted\n";
            }
            else $$.push_back((std::string)tmp);}
+     | PATH {std::vector <std::string> tmp; dive($1,tmp); $$ = tmp;}
      ;
 item : STRING {/*std::cout << " item " << $1 << "\n";*/ $$ = $1;}
-     | PATH {$$ = $1;}
      ;
 cmd : STRING {/*std::cout << "cmd " << $1 << "\n"*/; $$ = $1;}
     ;
@@ -105,6 +111,19 @@ cmd : STRING {/*std::cout << "cmd " << $1 << "\n"*/; $$ = $1;}
 void yy::parser::error (const std::string& m)
 {
   std::cerr << m << '\n';
+}
+
+void echo_exec(std::vector <std:: string> P){
+    for(int i = 1; i < P.size()-1; i++){
+        std::cout << P[i] << " ";
+    }
+    if(P.size() > 1) std::cout << P[P.size()-1] << "\n";
+}
+
+void pwd_exec(){
+    char cwd[256];
+    getcwd(cwd, sizeof(cwd));
+    std::cout << cwd << "\n";
 }
 
 void Tubes(inp I){
@@ -160,6 +179,15 @@ void Tubes(inp I){
             }
             for(int j = 0; j < pd.size(); j++) close(pd[j][0]);
 
+            if((I.P)[i][0] == "echo"){
+                echo_exec((I.P)[i]);
+                exit(0);
+            }
+            if((I.P)[i][0] == "pwd"){
+                pwd_exec();
+                exit(0);
+            }
+
             //std::cout << P.size() << " " << P[i][0] << " here\n";
             std::vector <char *> p;
             for (auto const &q: (I.P)[i]) {
@@ -194,6 +222,82 @@ void print_cwd(){
     uid_t euid = geteuid();
     if(euid == 0) std::cout << cwd << ">";
     else std::cout << cwd << "!>";
+}
+
+void dive(std::string pth, std::vector <std::string> &P){
+    std::string help;
+    std::vector <std::string> a;
+    std::vector <std::string> answ;
+    std::string dir0;
+    if(pth[0] == '*'){
+        char cwd[256];
+        getcwd(cwd, sizeof(cwd));
+        dir0 = (std::string) cwd;
+    }
+    int i = 0;
+    for(; i <  pth.size() && pth[i] != '*' && pth[i] != '?';i++) {
+        dir0 += pth[i];
+        help += pth[i];
+    }
+    //std::cout << i <<" and our help = " << help << "\n";
+    a.push_back(dir0);
+    for(; i < pth.size(); i++){
+        if(a.size() == 0) {
+            std::cerr << "no such file or directory\n";
+            return;
+        }
+        std::cout << "\t" << pth[i] << " :top now: ";
+        switch (pth[i]){
+            case '*' :{
+                //std::cout << help << "1\t";
+                help = help + ".*";
+                //std::cout << help << "2\t";
+                break;
+            }
+            case '.' :{
+                //std::cout << help << "3\t";
+                help = help + "\\.";
+                //std::cout << help << "4\t";
+                break;
+            }
+            default :{
+                help = help + pth[i];
+                break;
+            }
+        }
+        //std::cout << help << "5\n";
+
+        std::regex rg (help.c_str());
+        int counter = a.size();
+        while(counter > 0){
+            DIR *dir;
+            dir = opendir(a[0].c_str());
+            if (dir != NULL) {
+                for (auto ent = readdir(dir); ent != NULL; ent = readdir(dir)){
+                    std::string en = (std::string) (ent->d_name);
+                    std::string hel = a[0] + (char)(47) + en;
+                    if (en != "." && en != ".." && std::regex_match(hel, rg)) {
+                        a.push_back(hel);
+                        answ.push_back(hel);
+                        //std::cout <<help <<"\t" << hel << "\n";
+                    }
+                }
+            }
+            a.erase(a.begin());
+            closedir(dir);
+            counter--;
+        }
+        //std::cout<< "\t" << answ.size() << " output\n";
+        for(int it = 0; it < answ.size(); it++){
+            //std::cout<< "\t" << answ.size() << " output\n";
+            if(!std::regex_match(answ[it], rg)) {
+                answ.erase(answ.begin()+it);
+                it--;
+            }
+        }
+        std::cout<< "\t" << answ.size() << " output\n";
+    }
+    if(answ.size()>0) P.insert(P.end(), answ.begin(), answ.end());
 }
 
 int main(){

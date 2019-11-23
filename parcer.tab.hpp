@@ -54,10 +54,15 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <fcntl.h>
+#include <dirent.h>
 #include <stdlib.h>
 #include <sys/wait.h>
+#include <regex>
 
 void print_cwd();
+void echo_exec(std::vector <std:: string> P);
+void pwd_exec();
+void dive(std::string pth, std::vector <std:: string> &P);
 
 struct inp{
     std::vector <std::vector <std:: string> > P;
@@ -69,7 +74,7 @@ struct inp{
 
 void Tubes(inp I);
 
-#line 73 "parcer.tab.hpp"
+#line 78 "parcer.tab.hpp"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -184,7 +189,7 @@ void Tubes(inp I);
 #endif
 
 namespace yy {
-#line 188 "parcer.tab.hpp"
+#line 193 "parcer.tab.hpp"
 
 
 
@@ -1205,7 +1210,7 @@ switch (yytype)
     enum
     {
       yyeof_ = 0,
-      yylast_ = 42,     ///< Last index in yytable_.
+      yylast_ = 41,     ///< Last index in yytable_.
       yynnts_ = 8,  ///< Number of nonterminal symbols.
       yyfinal_ = 11, ///< Termination state number.
       yyterror_ = 1,
@@ -1461,7 +1466,7 @@ switch (yytype)
   }
 
 } // yy
-#line 1465 "parcer.tab.hpp"
+#line 1470 "parcer.tab.hpp"
 
 
 

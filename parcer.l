@@ -23,7 +23,7 @@ YY_DECL;
 \"([^""]|\\.)*\" {/*std::cout << yytext <<" \n"*/; std::string tmp(yytext); tmp.erase(tmp.begin()); tmp.erase(tmp.end()-1);
                    return yy::parser::make_STRING(tmp);}
 
-(\/|\.)(([[:alnum:]]|\*|\.|\/))*  {/*std::cout << yytext <<" \n";*/ return yy::parser::make_PATH((std::string) yytext);}
+(\/|\.|\*)(([[:alnum:]]|\*|\.|\/|\?))*  {/*std::cout << yytext <<" \n";*/ return yy::parser::make_PATH((std::string) yytext);}
 
 \$([[:alnum:]])+ {return yy::parser::make_VAR((std::string) yytext);}
 
@@ -39,6 +39,6 @@ YY_DECL;
 
 [ \t] {;}
 
-. {std::cerr << "mistery simbol\n";}
+. {std::cerr << "mistery simbol "<< yytext <<" \n";}
 
 %%
