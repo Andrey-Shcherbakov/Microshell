@@ -51,13 +51,23 @@
 #include <string>
 #include <unistd.h>
 #include <sys/types.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <sys/wait.h>
 
 void print_cwd();
-void Tubes(std::vector <std::vector <std:: string> > &P);
 
-#line 61 "parcer.tab.hpp"
+struct inp{
+    std::vector <std::vector <std:: string> > P;
+    bool flag_in;
+    std::string f_in;
+    bool flag_out;
+    std::string f_out;
+};
+
+void Tubes(inp I);
+
+#line 71 "parcer.tab.hpp"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -172,7 +182,7 @@ void Tubes(std::vector <std::vector <std:: string> > &P);
 #endif
 
 namespace yy {
-#line 176 "parcer.tab.hpp"
+#line 186 "parcer.tab.hpp"
 
 
 
@@ -378,19 +388,25 @@ namespace yy {
     {
       // OR
       // LEND
+      // EQ
+      // IN
+      // OUT
       char dummy1[sizeof (char)];
 
+      // ln
+      char dummy2[sizeof (inp)];
+
       // STRING
+      // PATH
+      // SET
+      // VAR
       // item
       // cmd
-      char dummy2[sizeof (std::string )];
+      char dummy3[sizeof (std::string )];
 
       // fullcommand
       // args
-      char dummy3[sizeof (std::vector <std:: string> )];
-
-      // ln
-      char dummy4[sizeof (std::vector <std::vector <std:: string> > )];
+      char dummy4[sizeof (std::vector <std:: string> )];
     };
 
     /// The size of the largest semantic type.
@@ -433,8 +449,14 @@ namespace yy {
       enum yytokentype
       {
         STRING = 258,
-        OR = 259,
-        LEND = 260
+        PATH = 259,
+        SET = 260,
+        VAR = 261,
+        OR = 262,
+        LEND = 263,
+        EQ = 264,
+        IN = 265,
+        OUT = 266
       };
     };
 
@@ -497,6 +519,17 @@ namespace yy {
       {}
 #endif
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, inp&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const inp& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::string && v)
         : Base (t)
         , value (std::move (v))
@@ -514,17 +547,6 @@ namespace yy {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const std::vector <std:: string> & v)
-        : Base (t)
-        , value (v)
-      {}
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::vector <std::vector <std:: string> > && v)
-        : Base (t)
-        , value (std::move (v))
-      {}
-#else
-      basic_symbol (typename Base::kind_type t, const std::vector <std::vector <std:: string> > & v)
         : Base (t)
         , value (v)
       {}
@@ -552,24 +574,30 @@ namespace yy {
         // Type destructor.
 switch (yytype)
     {
-      case 4: // OR
-      case 5: // LEND
+      case 7: // OR
+      case 8: // LEND
+      case 9: // EQ
+      case 10: // IN
+      case 11: // OUT
         value.template destroy< char > ();
         break;
 
+      case 14: // ln
+        value.template destroy< inp > ();
+        break;
+
       case 3: // STRING
-      case 11: // item
-      case 12: // cmd
+      case 4: // PATH
+      case 5: // SET
+      case 6: // VAR
+      case 18: // item
+      case 19: // cmd
         value.template destroy< std::string  > ();
         break;
 
-      case 9: // fullcommand
-      case 10: // args
+      case 16: // fullcommand
+      case 17: // args
         value.template destroy< std::vector <std:: string>  > ();
-        break;
-
-      case 8: // ln
-        value.template destroy< std::vector <std::vector <std:: string> >  > ();
         break;
 
       default:
@@ -661,26 +689,26 @@ switch (yytype)
       symbol_type (int tok, char v)
         : super_type(token_type (tok), std::move (v))
       {
-        YYASSERT (tok == token::OR || tok == token::LEND);
+        YYASSERT (tok == token::OR || tok == token::LEND || tok == token::EQ || tok == token::IN || tok == token::OUT);
       }
 #else
       symbol_type (int tok, const char& v)
         : super_type(token_type (tok), v)
       {
-        YYASSERT (tok == token::OR || tok == token::LEND);
+        YYASSERT (tok == token::OR || tok == token::LEND || tok == token::EQ || tok == token::IN || tok == token::OUT);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
       symbol_type (int tok, std::string  v)
         : super_type(token_type (tok), std::move (v))
       {
-        YYASSERT (tok == token::STRING);
+        YYASSERT (tok == token::STRING || tok == token::PATH || tok == token::SET || tok == token::VAR);
       }
 #else
       symbol_type (int tok, const std::string & v)
         : super_type(token_type (tok), v)
       {
-        YYASSERT (tok == token::STRING);
+        YYASSERT (tok == token::STRING || tok == token::PATH || tok == token::SET || tok == token::VAR);
       }
 #endif
     };
@@ -737,6 +765,51 @@ switch (yytype)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
+      make_PATH (std::string  v)
+      {
+        return symbol_type (token::PATH, std::move (v));
+      }
+#else
+      static
+      symbol_type
+      make_PATH (const std::string & v)
+      {
+        return symbol_type (token::PATH, v);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_SET (std::string  v)
+      {
+        return symbol_type (token::SET, std::move (v));
+      }
+#else
+      static
+      symbol_type
+      make_SET (const std::string & v)
+      {
+        return symbol_type (token::SET, v);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_VAR (std::string  v)
+      {
+        return symbol_type (token::VAR, std::move (v));
+      }
+#else
+      static
+      symbol_type
+      make_VAR (const std::string & v)
+      {
+        return symbol_type (token::VAR, v);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
       make_OR (char v)
       {
         return symbol_type (token::OR, std::move (v));
@@ -762,6 +835,51 @@ switch (yytype)
       make_LEND (const char& v)
       {
         return symbol_type (token::LEND, v);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_EQ (char v)
+      {
+        return symbol_type (token::EQ, std::move (v));
+      }
+#else
+      static
+      symbol_type
+      make_EQ (const char& v)
+      {
+        return symbol_type (token::EQ, v);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_IN (char v)
+      {
+        return symbol_type (token::IN, std::move (v));
+      }
+#else
+      static
+      symbol_type
+      make_IN (const char& v)
+      {
+        return symbol_type (token::IN, v);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_OUT (char v)
+      {
+        return symbol_type (token::OUT, std::move (v));
+      }
+#else
+      static
+      symbol_type
+      make_OUT (const char& v)
+      {
+        return symbol_type (token::OUT, v);
       }
 #endif
 
@@ -1067,12 +1185,12 @@ switch (yytype)
     enum
     {
       yyeof_ = 0,
-      yylast_ = 11,     ///< Last index in yytable_.
-      yynnts_ = 7,  ///< Number of nonterminal symbols.
-      yyfinal_ = 6, ///< Termination state number.
+      yylast_ = 36,     ///< Last index in yytable_.
+      yynnts_ = 8,  ///< Number of nonterminal symbols.
+      yyfinal_ = 9, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 6  ///< Number of tokens.
+      yyntokens_ = 12  ///< Number of tokens.
     };
 
 
@@ -1114,9 +1232,9 @@ switch (yytype)
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
-       5
+       5,     6,     7,     8,     9,    10,    11
     };
-    const unsigned user_token_number_max_ = 260;
+    const unsigned user_token_number_max_ = 266;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int> (t) <= yyeof_)
@@ -1136,24 +1254,30 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 4: // OR
-      case 5: // LEND
+      case 7: // OR
+      case 8: // LEND
+      case 9: // EQ
+      case 10: // IN
+      case 11: // OUT
         value.move< char > (std::move (that.value));
         break;
 
+      case 14: // ln
+        value.move< inp > (std::move (that.value));
+        break;
+
       case 3: // STRING
-      case 11: // item
-      case 12: // cmd
+      case 4: // PATH
+      case 5: // SET
+      case 6: // VAR
+      case 18: // item
+      case 19: // cmd
         value.move< std::string  > (std::move (that.value));
         break;
 
-      case 9: // fullcommand
-      case 10: // args
+      case 16: // fullcommand
+      case 17: // args
         value.move< std::vector <std:: string>  > (std::move (that.value));
-        break;
-
-      case 8: // ln
-        value.move< std::vector <std::vector <std:: string> >  > (std::move (that.value));
         break;
 
       default:
@@ -1170,24 +1294,30 @@ switch (yytype)
   {
     switch (this->type_get ())
     {
-      case 4: // OR
-      case 5: // LEND
+      case 7: // OR
+      case 8: // LEND
+      case 9: // EQ
+      case 10: // IN
+      case 11: // OUT
         value.copy< char > (YY_MOVE (that.value));
         break;
 
+      case 14: // ln
+        value.copy< inp > (YY_MOVE (that.value));
+        break;
+
       case 3: // STRING
-      case 11: // item
-      case 12: // cmd
+      case 4: // PATH
+      case 5: // SET
+      case 6: // VAR
+      case 18: // item
+      case 19: // cmd
         value.copy< std::string  > (YY_MOVE (that.value));
         break;
 
-      case 9: // fullcommand
-      case 10: // args
+      case 16: // fullcommand
+      case 17: // args
         value.copy< std::vector <std:: string>  > (YY_MOVE (that.value));
-        break;
-
-      case 8: // ln
-        value.copy< std::vector <std::vector <std:: string> >  > (YY_MOVE (that.value));
         break;
 
       default:
@@ -1212,24 +1342,30 @@ switch (yytype)
     super_type::move (s);
     switch (this->type_get ())
     {
-      case 4: // OR
-      case 5: // LEND
+      case 7: // OR
+      case 8: // LEND
+      case 9: // EQ
+      case 10: // IN
+      case 11: // OUT
         value.move< char > (YY_MOVE (s.value));
         break;
 
+      case 14: // ln
+        value.move< inp > (YY_MOVE (s.value));
+        break;
+
       case 3: // STRING
-      case 11: // item
-      case 12: // cmd
+      case 4: // PATH
+      case 5: // SET
+      case 6: // VAR
+      case 18: // item
+      case 19: // cmd
         value.move< std::string  > (YY_MOVE (s.value));
         break;
 
-      case 9: // fullcommand
-      case 10: // args
+      case 16: // fullcommand
+      case 17: // args
         value.move< std::vector <std:: string>  > (YY_MOVE (s.value));
-        break;
-
-      case 8: // ln
-        value.move< std::vector <std::vector <std:: string> >  > (YY_MOVE (s.value));
         break;
 
       default:
@@ -1295,13 +1431,14 @@ switch (yytype)
     const unsigned short
     yytoken_number_[] =
     {
-       0,   256,   257,   258,   259,   260
+       0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
+     265,   266
     };
     return token_type (yytoken_number_[type]);
   }
 
 } // yy
-#line 1305 "parcer.tab.hpp"
+#line 1442 "parcer.tab.hpp"
 
 
 

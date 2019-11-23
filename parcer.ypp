@@ -10,11 +10,21 @@
 #include <string>
 #include <unistd.h>
 #include <sys/types.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <sys/wait.h>
 
 void print_cwd();
-void Tubes(std::vector <std::vector <std:: string> > &P);
+
+struct inp{
+    std::vector <std::vector <std:: string> > P;
+    bool flag_in;
+    std::string f_in;
+    bool flag_out;
+    std::string f_out;
+};
+
+void Tubes(inp I);
 }
 
 %code
@@ -23,28 +33,55 @@ void Tubes(std::vector <std::vector <std:: string> > &P);
     YY_DECL;
 }
 
-%token <std::string >  STRING
-%token <char> OR LEND
+%token <std::string >  STRING PATH SET VAR
+%token <char> OR LEND EQ IN OUT
 %type  <std::string >  cmd item
 %type  <std::vector <std:: string> > fullcommand args
-%type  <std::vector <std::vector <std:: string> > >  ln
+%type  <inp>  ln
 %start ex
 
 %%
-ex : ex ln LEND{Tubes($2); print_cwd();}
-   | ln LEND {Tubes($1); print_cwd();}
+ex : ex ln LEND{if(($2.P).size() > 0) Tubes($2);
+                print_cwd();}
+   |  ex ln OUT STRING LEND {$2.flag_out = true; $2.f_out = $4;
+                              if(($2.P).size() > 0) Tubes($2);
+                              print_cwd();}
+   | ln LEND {$1.flag_out = false; $1.f_out = "no out redirections";
+              if(($1.P).size() > 0) Tubes($1);
+              print_cwd();}
+   | ln OUT STRING LEND {$1.flag_out = true; $1.f_out = $3;
+                          if(($1.P).size() > 0) Tubes($1);
+                          print_cwd();}
    ;
-ln : ln OR fullcommand {$1.push_back($3); $$ = $1;}
-   | fullcommand {$$.push_back($1); }
+ln : ln OR fullcommand {($1.P).push_back($3); $$.P = $1.P;}
+   | fullcommand {($$.P).push_back($1);}
+   | fullcommand IN STRING {($$.P).push_back($1); $$.flag_in = true; $$.f_in = $3;}
+   | ln OR setcommand {($$.P) = ($$.P);}
+   | setcommand {($$.P) = ($$.P); $$.flag_in = false; $$.f_in = "no in redirections";}
    ;
+
+setcommand : SET VAR EQ item {setenv($2.c_str(), $4.c_str(), 1);}
+           ;
+
 fullcommand : cmd args {std::vector<std:: string>::iterator it = $2.begin();
                         $2.insert(it, $1); $$ = $2;}
             | cmd {$$.push_back($1);}
             ;
 args : args item {$1.push_back($2); $$ = $1;}
      | item  {$$.push_back($1);}
+     | args VAR {char *tmp = getenv($2.c_str());
+                 if(tmp == NULL){
+                     std::cerr << "variable was not seted\n";
+                 }
+                 else $1.push_back((std::string)tmp); $$ =$1;}
+     | VAR {char *tmp = getenv($1.c_str());
+           if(tmp == NULL){
+               std::cerr << "variable was not seted\n";
+           }
+           else $$.push_back((std::string)tmp);}
      ;
 item : STRING {/*std::cout << " item " << $1 << "\n";*/ $$ = $1;}
+     | PATH {$$ = $1;}
      ;
 cmd : STRING {/*std::cout << "cmd " << $1 << "\n"*/; $$ = $1;}
     ;
@@ -55,58 +92,62 @@ void yy::parser::error (const std::string& m)
   std::cerr << m << '\n';
 }
 
-void Tubes(std::vector <std::vector <std:: string> > &P){
+void Tubes(inp I){
 
-    /*for(int i = 0; i < P.size(); i++){
-        std:: cout << i << " :command num\n";
-        for(int j = 0; j < P[i].size(); j ++)
-            std:: cout << "my args:: " << P[i][j] << "\n";
-    }*/
-
-    if(P.size() > 1){
-        pid_t lastp;
-        std::vector <std:: vector <int> > pd(P.size()-1, (std::vector<int> (2,0)));
-        for(int i = 0; i < pd.size(); i++) {int fd[2]; pipe(fd); pd[i][0] = fd[0]; pd[i][1] = fd[1];}
-        for(int i = 0; i < P.size(); i++){
-            lastp = fork();
-            if(lastp == 0){//child
-                //std:: cout << "I'm a child " << getpid() << "\n";
-
-                if(i < pd.size()) {
-                    close(STDOUT_FILENO);
-                    dup2(pd[i][1], STDOUT_FILENO);
-                 }
-                for(int j = 0; j < pd.size(); j++) close(pd[j][1]);
-
-                if(i > 0) {
-                    close(STDIN_FILENO);
-                    dup2(pd[i-1][0], STDIN_FILENO);
-                }
-                for(int j = 0; j < pd.size(); j++) close(pd[j][0]);
-
-                //std::cout << P.size() << " " << P[i][0] << " here\n";
-                std::vector <char *> p;
-                for (auto const &q: P[i]) {
-                    p.push_back((char *)(q.c_str()));
-                }
-                p.push_back(NULL);
-                execvp(p[0], &p[0]);
-                perror("execvp");
-                exit(0);
-            }
+    int fd_in, oldin, fd_out, oldout;
+    if(I.flag_in){
+        fd_in = open((I.f_in).c_str(),O_CREAT|O_RDONLY);
+        if(fd_in)
+        {
+            oldin = dup(STDIN_FILENO);
+            //close(STDIN_FILENO);
+            dup2(fd_in,STDIN_FILENO);
+            close(fd_in);
         }
-        for(int j = 0; j < pd.size(); j++) {
-            close(pd[j][0]);
-            close(pd[j][1]);
+        else
+        {
+            printf("Ошибка при открытии файла. \n");
         }
-        //std:: cout << "I'm a parent " << getpid() << "\n";
-        waitpid(lastp, NULL, 0);
     }
-    else{
-        pid_t lastp = fork();
+
+    if(I.flag_out){
+        fd_out = open((I.f_out).c_str(),O_CREAT|O_WRONLY);
+        if(fd_out)
+        {
+            oldout = dup(STDOUT_FILENO);
+            //close(STDOU_FILENO);
+            dup2(fd_out,STDOUT_FILENO);
+            close(fd_out);
+        }
+        else
+        {
+            printf("Ошибка при открытии файла. \n");
+        }
+    }
+    pid_t lastp;
+    std::vector <std:: vector <int> > pd((I.P).size()-1, (std::vector<int> (2,0)));
+    for(int i = 0; i < pd.size(); i++) {int fd[2]; pipe(fd); pd[i][0] = fd[0]; pd[i][1] = fd[1];}
+    for(int i = 0; i < (I.P).size(); i++){
+        lastp = fork();
         if(lastp == 0){//child
+            //std:: cout << "I'm a child " << getpid() << "\n";
+
+            if(i < pd.size()) {
+                close(STDOUT_FILENO);
+                dup2(pd[i][1], STDOUT_FILENO);
+            }
+
+            for(int j = 0; j < pd.size(); j++) close(pd[j][1]);
+
+            if(i > 0) {
+                close(STDIN_FILENO);
+                dup2(pd[i-1][0], STDIN_FILENO);
+            }
+            for(int j = 0; j < pd.size(); j++) close(pd[j][0]);
+
+            //std::cout << P.size() << " " << P[i][0] << " here\n";
             std::vector <char *> p;
-            for (auto const &q: P[0]) {
+            for (auto const &q: (I.P)[i]) {
                 p.push_back((char *)(q.c_str()));
             }
             p.push_back(NULL);
@@ -114,8 +155,21 @@ void Tubes(std::vector <std::vector <std:: string> > &P){
             perror("execvp");
             exit(0);
         }
-        //std:: cout << "I'm parent " << getpid() << "\n";
-        waitpid(lastp, NULL, 0);
+    }
+    for(int j = 0; j < pd.size(); j++) {
+        close(pd[j][0]);
+        close(pd[j][1]);
+    }
+    //std:: cout << "I'm a parent " << getpid() << "\n";
+    waitpid(lastp, NULL, 0);
+
+    if(I.flag_in){
+        dup2(oldin,STDIN_FILENO);
+        close(oldin);
+    }
+    if(I.flag_out){
+        dup2(oldout,STDOUT_FILENO);
+        close(oldout);
     }
 }
 
