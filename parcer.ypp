@@ -40,7 +40,7 @@ void Tubes(inp I);
     YY_DECL;
 }
 
-%token <std::string >  STRING PATH SET VAR TIME
+%token <std::string >  STRING PATH SET VAR TIME CD
 %token <char> OR LEND EQ IN OUT
 %type  <std::string >  cmd item
 %type  <std::vector <std:: string> > fullcommand args
@@ -72,8 +72,14 @@ ex : ex ln LEND{$2.flag_out = false; $2.f_out = "no out redirections";
    | ln OUT STRING LEND {$1.flag_out = true; $1.f_out = $3;
                           if(($1.P).size() > 0) Tubes($1);
                           print_cwd();}
+   | ex CD PATH LEND {int check = chdir($3.c_str());
+                      if(check == -1) std::cerr << "Can't go to such place\n";
+                      print_cwd();}
+   | CD PATH LEND {int check = chdir($2.c_str());
+                   if(check == -1) std::cerr << "Can't go to such place\n";
+                   print_cwd();}
    ;
-ln : ln OR fullcommand {($1.P).push_back($3); $$.P = $1.P;}
+ln : ln OR fullcommand {($1.P).push_back($3); $$ = $1;}
    | fullcommand {($$.P).push_back($1); $$.flag_in = false; $$.f_in = "no in redirections";}
    | fullcommand IN STRING {($$.P).push_back($1); $$.flag_in = true; $$.f_in = $3;}
    | ln OR setcommand {($$.P) = ($$.P);}
@@ -128,36 +134,21 @@ void pwd_exec(){
 
 void Tubes(inp I){
 
-    int fd_in, oldin, fd_out, oldout;
+    int fd_in, fd_out;
     if(I.flag_in){
-        fd_in = open((I.f_in).c_str(),O_CREAT|O_RDONLY);
-        if(fd_in)
-        {
-            oldin = dup(STDIN_FILENO);
-            //close(STDIN_FILENO);
-            dup2(fd_in,STDIN_FILENO);
-            close(fd_in);
-        }
-        else
-        {
+        fd_in = open((I.f_in).c_str(), O_RDONLY, 0666);
+        if(fd_in < 0){
             printf("Ошибка при открытии файла. \n");
         }
     }
 
     if(I.flag_out){
-        fd_out = open((I.f_out).c_str(),O_CREAT|O_WRONLY);
-        if(fd_out)
-        {
-            oldout = dup(STDOUT_FILENO);
-            //close(STDOU_FILENO);
-            dup2(fd_out,STDOUT_FILENO);
-            close(fd_out);
-        }
-        else
-        {
+        fd_out = open((I.f_out).c_str(),O_WRONLY|O_CREAT|O_TRUNC,0666);
+        if(fd_out < 0){
             printf("Ошибка при открытии файла. \n");
         }
     }
+
     pid_t lastp;
     std::vector <std:: vector <int> > pd((I.P).size()-1, (std::vector<int> (2,0)));
     for(int i = 0; i < pd.size(); i++) {int fd[2]; pipe(fd); pd[i][0] = fd[0]; pd[i][1] = fd[1];}
@@ -165,7 +156,14 @@ void Tubes(inp I){
         lastp = fork();
         if(lastp == 0){//child
             //std:: cout << "I'm a child " << getpid() << "\n";
-
+            if(i == 0 && I.flag_in){
+                close(STDIN_FILENO);
+                dup2(fd_in,STDIN_FILENO);
+            }
+            if(i == pd.size() && I.flag_out){
+                close(STDOUT_FILENO);
+                dup2(fd_out,STDOUT_FILENO);
+            }
             if(i < pd.size()) {
                 close(STDOUT_FILENO);
                 dup2(pd[i][1], STDOUT_FILENO);
@@ -177,6 +175,7 @@ void Tubes(inp I){
                 close(STDIN_FILENO);
                 dup2(pd[i-1][0], STDIN_FILENO);
             }
+
             for(int j = 0; j < pd.size(); j++) close(pd[j][0]);
 
             if((I.P)[i][0] == "echo"){
@@ -188,7 +187,7 @@ void Tubes(inp I){
                 exit(0);
             }
 
-            //std::cout << P.size() << " " << P[i][0] << " here\n";
+            //std::cout << (I.P)[i][0] << " input\n";
             std::vector <char *> p;
             for (auto const &q: (I.P)[i]) {
                 p.push_back((char *)(q.c_str()));
@@ -204,16 +203,15 @@ void Tubes(inp I){
         close(pd[j][1]);
     }
     //std:: cout << "I'm a parent " << getpid() << "\n";
-    waitpid(lastp, NULL, 0);
 
     if(I.flag_in){
-        dup2(oldin,STDIN_FILENO);
-        close(oldin);
+        close(fd_in);
     }
     if(I.flag_out){
-        dup2(oldout,STDOUT_FILENO);
-        close(oldout);
+        close(fd_out);
     }
+
+    waitpid(lastp, NULL, 0);
 }
 
 void print_cwd(){
@@ -229,29 +227,37 @@ void dive(std::string pth, std::vector <std::string> &P){
     std::vector <std::string> a;
     std::vector <std::string> answ;
     std::string dir0;
-    if(pth[0] == '*'){
+    if(pth[0] == '*' || pth[0] == '?'){
         char cwd[256];
         getcwd(cwd, sizeof(cwd));
         dir0 = (std::string) cwd;
+        if(pth.size() ==1){
+            P.push_back(dir0);
+            return;
+        }
     }
     int i = 0;
     for(; i <  pth.size() && pth[i] != '*' && pth[i] != '?';i++) {
         dir0 += pth[i];
         help += pth[i];
     }
-    //std::cout << i <<" and our help = " << help << "\n";
+    if(i == pth.size()){
+        P.push_back(pth);
+        return;
+    }
+    //std::cout << i <<" and our dir = " << dir0 << "\n";
     a.push_back(dir0);
     for(; i < pth.size(); i++){
-        if(a.size() == 0) {
-            std::cerr << "no such file or directory\n";
-            return;
-        }
-        std::cout << "\t" << pth[i] << " :top now: ";
+        //std::cout << "\t" << pth[i] << " :top now: ";
         switch (pth[i]){
             case '*' :{
                 //std::cout << help << "1\t";
-                help = help + ".*";
+                help = help + "([^/])*";
                 //std::cout << help << "2\t";
+                break;
+            }
+            case '?' :{
+                help = help + ".?";
                 break;
             }
             case '.' :{
@@ -265,9 +271,9 @@ void dive(std::string pth, std::vector <std::string> &P){
                 break;
             }
         }
-        //std::cout << help << "5\n";
+        //std::cout << help << " help\n";
 
-        std::regex rg (help.c_str());
+        std::regex rg ((help+"(.)*").c_str());
         int counter = a.size();
         while(counter > 0){
             DIR *dir;
@@ -275,11 +281,14 @@ void dive(std::string pth, std::vector <std::string> &P){
             if (dir != NULL) {
                 for (auto ent = readdir(dir); ent != NULL; ent = readdir(dir)){
                     std::string en = (std::string) (ent->d_name);
-                    std::string hel = a[0] + (char)(47) + en;
+                    std::string hel;
+                    if(a[0][a[0].size() -1] != '/') hel = a[0] + (char)(47) + en;
+                    else hel = a[0] + en;
+                    //std::cout << hel << " in\n";
                     if (en != "." && en != ".." && std::regex_match(hel, rg)) {
                         a.push_back(hel);
                         answ.push_back(hel);
-                        //std::cout <<help <<"\t" << hel << "\n";
+                        //std::cout <<"\t" << hel << " in a row\n";
                     }
                 }
             }
@@ -287,17 +296,30 @@ void dive(std::string pth, std::vector <std::string> &P){
             closedir(dir);
             counter--;
         }
-        //std::cout<< "\t" << answ.size() << " output\n";
+        std::cout<< "\t" << answ.size() << " output\n";
         for(int it = 0; it < answ.size(); it++){
-            //std::cout<< "\t" << answ.size() << " output\n";
+            //std::cout<< "\t" << answ[it] << " output\n";
             if(!std::regex_match(answ[it], rg)) {
                 answ.erase(answ.begin()+it);
                 it--;
             }
         }
-        std::cout<< "\t" << answ.size() << " output\n";
+        //for(int it = 0; it < answ.size(); it++) std::cout << answ[it] << " in answers\n";
+        //std::cout<< "\t" << answ.size() << " size\n";
     }
+    //std::cout << help << " help\n";
+    std::regex rg ((help).c_str());
+    for(int it = 0; it < answ.size(); it++){
+        //std::cout<< "\t" << answ.size() << " output\n";
+        if(!std::regex_match(answ[it], rg)) {
+            answ.erase(answ.begin()+it);
+            it--;
+        }
+    }
+    //std::cout<< "\t" << answ.size() << " output\n";
+    //for(int it = 0; it < answ.size(); it++) std::cout << answ[it] << " final answers\n";
     if(answ.size()>0) P.insert(P.end(), answ.begin(), answ.end());
+    else P.push_back(pth);
 }
 
 int main(){
