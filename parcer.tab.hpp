@@ -48,6 +48,7 @@
 
 #include <iostream>
 #include <vector>
+#include <deque>
 #include <string>
 #include <unistd.h>
 #include <sys/types.h>
@@ -58,11 +59,13 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <regex>
+#include <signal.h>
 
 void print_cwd();
 void echo_exec(std::vector <std:: string> P);
 void pwd_exec();
 void dive(std::string pth, std::vector <std:: string> &P);
+void handler(int signal);
 
 struct inp{
     std::vector <std::vector <std:: string> > P;
@@ -74,7 +77,7 @@ struct inp{
 
 void Tubes(inp I);
 
-#line 78 "parcer.tab.hpp"
+#line 81 "parcer.tab.hpp"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -189,7 +192,7 @@ void Tubes(inp I);
 #endif
 
 namespace yy {
-#line 193 "parcer.tab.hpp"
+#line 196 "parcer.tab.hpp"
 
 
 
@@ -981,7 +984,7 @@ switch (yytype)
   // number is the opposite.  If YYTABLE_NINF, syntax error.
   static const unsigned char yytable_[];
 
-  static const unsigned char yycheck_[];
+  static const signed char yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
@@ -1228,9 +1231,9 @@ switch (yytype)
     enum
     {
       yyeof_ = 0,
-      yylast_ = 46,     ///< Last index in yytable_.
+      yylast_ = 51,     ///< Last index in yytable_.
       yynnts_ = 8,  ///< Number of nonterminal symbols.
-      yyfinal_ = 13, ///< Termination state number.
+      yyfinal_ = 14, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
       yyntokens_ = 14  ///< Number of tokens.
@@ -1487,7 +1490,7 @@ switch (yytype)
   }
 
 } // yy
-#line 1491 "parcer.tab.hpp"
+#line 1494 "parcer.tab.hpp"
 
 
 

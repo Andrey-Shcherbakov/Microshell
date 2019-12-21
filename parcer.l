@@ -20,12 +20,12 @@ YY_DECL;
 
 "time" {return yy::parser::make_TIME((std::string) yytext);}
 
-([[:alnum:]]|\-|\_)+ {/*std::cout << yytext <<" \n";*/ return yy::parser::make_STRING((std::string) yytext);}
+([[:alnum:]]|\-|\_|\')+ {/*std::cout << yytext <<" \n";*/ return yy::parser::make_STRING((std::string) yytext);}
 
 \"([^""]|\\.)*\" {/*std::cout << yytext <<" \n"*/; std::string tmp(yytext); tmp.erase(tmp.begin()); tmp.erase(tmp.end()-1);
                    return yy::parser::make_STRING(tmp);}
 
-(\/|\.|\*)(([[:alnum:]]|\*|\.|\/|\?|_))*  {/*std::cout << yytext <<" \n";*/ return yy::parser::make_PATH((std::string) yytext);}
+(\/|\.|\*|\?)(([[:alnum:]]|\*|\.|\/|\?|_))*  {/*std::cout << yytext <<" \n";*/ return yy::parser::make_PATH((std::string) yytext);}
 
 \$([[:alnum:]])+ {return yy::parser::make_VAR((std::string) yytext);}
 

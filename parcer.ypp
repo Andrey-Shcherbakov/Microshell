@@ -7,6 +7,7 @@
 %code requires{
 #include <iostream>
 #include <vector>
+#include <deque>
 #include <string>
 #include <unistd.h>
 #include <sys/types.h>
@@ -17,11 +18,13 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <regex>
+#include <signal.h>
 
 void print_cwd();
 void echo_exec(std::vector <std:: string> P);
 void pwd_exec();
 void dive(std::string pth, std::vector <std:: string> &P);
+void handler(int signal);
 
 struct inp{
     std::vector <std::vector <std:: string> > P;
@@ -51,6 +54,7 @@ void Tubes(inp I);
 ex : ex ln LEND{$2.flag_out = false; $2.f_out = "no out redirections";
                 if(($2.P).size() > 0) Tubes($2);
                 print_cwd();}
+   | ex LEND {print_cwd();}
    | ex ln OUT STRING LEND {$2.flag_out = true; $2.f_out = $4;
                               if(($2.P).size() > 0) Tubes($2);
                               print_cwd();}
@@ -78,6 +82,7 @@ ex : ex ln LEND{$2.flag_out = false; $2.f_out = "no out redirections";
    | CD PATH LEND {int check = chdir($2.c_str());
                    if(check == -1) std::cerr << "Can't go to such place\n";
                    print_cwd();}
+   | LEND {print_cwd();}
    ;
 ln : ln OR fullcommand {($1.P).push_back($3); $$ = $1;}
    | fullcommand {($$.P).push_back($1); $$.flag_in = false; $$.f_in = "no in redirections";}
@@ -114,9 +119,8 @@ cmd : STRING {/*std::cout << "cmd " << $1 << "\n"*/; $$ = $1;}
     ;
 %%
 
-void yy::parser::error (const std::string& m)
-{
-  std::cerr << m << '\n';
+void handler(int signal){
+    std::cout << "\n";
 }
 
 void echo_exec(std::vector <std:: string> P){
@@ -150,12 +154,15 @@ void Tubes(inp I){
     }
 
     pid_t lastp;
+    signal(SIGINT, handler);
     std::vector <std:: vector <int> > pd((I.P).size()-1, (std::vector<int> (2,0)));
     for(int i = 0; i < pd.size(); i++) {int fd[2]; pipe(fd); pd[i][0] = fd[0]; pd[i][1] = fd[1];}
     for(int i = 0; i < (I.P).size(); i++){
         lastp = fork();
         if(lastp == 0){//child
             //std:: cout << "I'm a child " << getpid() << "\n";
+            signal(SIGINT,SIG_DFL);
+
             if(i == 0 && I.flag_in){
                 close(STDIN_FILENO);
                 dup2(fd_in,STDIN_FILENO);
@@ -210,7 +217,6 @@ void Tubes(inp I){
     if(I.flag_out){
         close(fd_out);
     }
-
     waitpid(lastp, NULL, 0);
 }
 
@@ -224,7 +230,7 @@ void print_cwd(){
 
 void dive(std::string pth, std::vector <std::string> &P){
     std::string help;
-    std::vector <std::string> a;
+    std::deque <std::string> a;
     std::vector <std::string> answ;
     std::string dir0;
     if(pth[0] == '*' || pth[0] == '?'){
@@ -247,33 +253,36 @@ void dive(std::string pth, std::vector <std::string> &P){
     }
     //std::cout << i <<" and our dir = " << dir0 << "\n";
     a.push_back(dir0);
-    for(; i < pth.size(); i++){
+    while(i < pth.size()){
         //std::cout << "\t" << pth[i] << " :top now: ";
-        switch (pth[i]){
-            case '*' :{
-                //std::cout << help << "1\t";
-                help = help + "([^/])*";
-                //std::cout << help << "2\t";
-                break;
+        while(pth[i] != '/' && i < pth.size()){
+            switch (pth[i]){
+                case '*' :{
+                    //std::cout << help << "1\t";
+                    help = help + "([^/])*";
+                    //std::cout << help << "2\t";
+                    break;
+                }
+                case '?' :{
+                    help = help + ".?";
+                    break;
+                }
+                case '.' :{
+                    //std::cout << help << "3\t";
+                    help = help + "\\.";
+                    //std::cout << help << "4\t";
+                    break;
+                }
+                default :{
+                    help = help + pth[i];
+                    break;
+                }
             }
-            case '?' :{
-                help = help + ".?";
-                break;
-            }
-            case '.' :{
-                //std::cout << help << "3\t";
-                help = help + "\\.";
-                //std::cout << help << "4\t";
-                break;
-            }
-            default :{
-                help = help + pth[i];
-                break;
-            }
+            i++;
         }
         //std::cout << help << " help\n";
 
-        std::regex rg ((help+"(.)*").c_str());
+        std::regex rg ((help).c_str());
         int counter = a.size();
         while(counter > 0){
             DIR *dir;
@@ -286,45 +295,49 @@ void dive(std::string pth, std::vector <std::string> &P){
                     else hel = a[0] + en;
                     //std::cout << hel << " in\n";
                     if (en != "." && en != ".." && std::regex_match(hel, rg)) {
-                        a.push_back(hel);
-                        answ.push_back(hel);
+                        if(i != pth.size()) a.push_back(hel);
+                        else answ.push_back(hel);
                         //std::cout <<"\t" << hel << " in a row\n";
                     }
                 }
             }
-            a.erase(a.begin());
+            a.pop_front();
             closedir(dir);
             counter--;
         }
-        std::cout<< "\t" << answ.size() << " output\n";
-        for(int it = 0; it < answ.size(); it++){
-            //std::cout<< "\t" << answ[it] << " output\n";
-            if(!std::regex_match(answ[it], rg)) {
-                answ.erase(answ.begin()+it);
-                it--;
-            }
-        }
+        //std::cout<< "\t" << answ.size() << " output\n";
+
         //for(int it = 0; it < answ.size(); it++) std::cout << answ[it] << " in answers\n";
         //std::cout<< "\t" << answ.size() << " size\n";
+        if(i < pth.size() && pth[i] == '/'){
+            help = help + "/";
+            i++;
+        }
     }
     //std::cout << help << " help\n";
     std::regex rg ((help).c_str());
     for(int it = 0; it < answ.size(); it++){
         //std::cout<< "\t" << answ.size() << " output\n";
-        if(!std::regex_match(answ[it], rg)) {
-            answ.erase(answ.begin()+it);
-            it--;
+        if(std::regex_match(answ[it], rg)) {
+            P.push_back(answ[it]);
         }
     }
     //std::cout<< "\t" << answ.size() << " output\n";
     //for(int it = 0; it < answ.size(); it++) std::cout << answ[it] << " final answers\n";
-    if(answ.size()>0) P.insert(P.end(), answ.begin(), answ.end());
-    else P.push_back(pth);
+    if(answ.size()==0) P.push_back(pth);
 }
 
 int main(){
       print_cwd();
+      int res = 1;
       yy::parser pars;
-      int res = pars.parse();
+      while(res == 1){
+          res = pars.parse();
+      }
       return res;
+}
+
+void yy::parser::error (const std::string& m)
+{
+  std::cerr << m << '\n';
 }
